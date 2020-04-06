@@ -1,5 +1,6 @@
 import 'package:cryptoticker/coin_data.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -7,23 +8,29 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
-  
+
+  String selectedCurrency = currenciesList.first;
+
   DropdownMenuItem<String> createDropDownMenuItem(String s){
     return DropdownMenuItem(child: Text(s), value: s,);
   }
 
-  List<DropdownMenuItem<String>> createDropDownMenItemList(){
+  List<Widget> createIosList(){
+    List<Widget> list = List();
+    for(String currency in currenciesList){
+      list.add(Text(currency));
+    }
+    return list;
+  }
+
+  List<DropdownMenuItem> createDropDownMenItemList(){
     List<DropdownMenuItem<String>> list = List();
-    List<String> currencies = currenciesList;
-    for(String currency in currencies){
+    for(String currency in currenciesList){
       list.add(createDropDownMenuItem(currency));
     }
     return list;
   }
 
-
-
-  String selectedCurrency = "GBP";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,19 +67,32 @@ class _PriceScreenState extends State<PriceScreen> {
             alignment: Alignment.center,
             padding: EdgeInsets.only(bottom: 30.0),
             color: Colors.lightBlue,
-            child: DropdownButton(
-              value: selectedCurrency,
-                items: createDropDownMenItemList(),
-                onChanged: (value) {
-                    setState(() {
-                      selectedCurrency = value;
-                      print(selectedCurrency);
-                    });
-                  }
-                ),
+            child: CupertinoPicker(
+                backgroundColor: Colors.lightBlue,
+                itemExtent: 32.0,
+                onSelectedItemChanged: (selectedIndex) {
+                  print(selectedIndex);
+                },
+                children: createIosList()
+            ),
           ),
         ],
       ),
     );
   }
 }
+
+/*
+
+child: DropdownButton(
+value: selectedCurrency,
+items: createDropDownMenItemList(),
+onChanged: (value) {
+setState(() {
+selectedCurrency = value;
+print(selectedCurrency);
+});
+}
+)
+
+*/
