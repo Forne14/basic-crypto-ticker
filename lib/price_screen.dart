@@ -30,12 +30,28 @@ class _PriceScreenState extends State<PriceScreen> {
   void printPriceInformation(String currency) async{
     dynamic priceData = await getPriceData("$currency");
     List<dynamic> body = jsonDecode(priceData.body);
-    priceBTC = body[0]["price"];
-    priceETH = body[1]["price"];
-    priceLTC = body[2]["price"];
-    print(priceBTC);
-    print(priceETH);
-    print(priceLTC);
+    setState(() {
+      priceBTC = body[0]["price"];
+      priceETH = body[1]["price"];
+      priceLTC = body[2]["price"];
+    });
+
+    //print(priceBTC);
+    //print(priceETH);
+    //print(priceLTC);
+  }
+
+   getCoinPriceData(String currencyToken) async {
+    var url = "https://api.nomics.com/v1/currencies/ticker?key=5a7ec58775ac8842507c93b12d960906&ids=$currencyToken&interval=1d&convert=$selectedCurrency";
+    NetworkHelper networkHelper = NetworkHelper(url);
+    var response = await networkHelper.getData();
+    if(response.statusCode == 200){
+      var body = jsonDecode(response.body);
+      var coinData = body[0]["price"].toString();
+      return coinData;
+    }else{
+      return "unable to get data";
+    }
   }
 
   DropdownMenuItem<String> createDropDownMenuItem(String s){
@@ -65,14 +81,13 @@ class _PriceScreenState extends State<PriceScreen> {
         onSelectedItemChanged: (selectedIndex) {
           selectedCurrency = currenciesList[selectedIndex];
           print(selectedCurrency);
-    },
-    children: createIosList()
+        },
+        children: createIosList()
     );
   }
 
   String getCoinText(String crypto){
     //get coin info
-    printPriceInformation(selectedCurrency);
     if(crypto == "BTC"){
       return '1 $crypto = $priceBTC $selectedCurrency';
     }else if (crypto == "ETH"){
@@ -83,18 +98,17 @@ class _PriceScreenState extends State<PriceScreen> {
   }
 
 
-
   DropdownButton androidDropDown(){
     return DropdownButton(
-            value: selectedCurrency,
-            items: createDropDownMenItemList(),
-            onChanged: (value) {
-              setState(() {
-                selectedCurrency = value;
-                print(selectedCurrency);
-                printPriceInformation(selectedCurrency);
-              });
-            });
+        value: selectedCurrency,
+        items: createDropDownMenItemList(),
+        onChanged: (_value) {
+          print(selectedCurrency);
+          setState(() {
+            selectedCurrency = _value;
+            printPriceInformation(selectedCurrency);
+          });
+        });
   }
 
   Padding createCryptoPad(String crypto){
@@ -130,11 +144,18 @@ class _PriceScreenState extends State<PriceScreen> {
   }
 
   @override
-  void initState() {
+  void initState()  {
     // TODO: implement initState
     super.initState();
     print(selectedCurrency);
     printPriceInformation(selectedCurrency);
+    printP();
+  }
+
+  void printP(){
+    print(priceBTC);
+    print(priceETH);
+    print(priceLTC);
   }
 
   @override
