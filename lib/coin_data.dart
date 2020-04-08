@@ -33,6 +33,7 @@ const List<String> cryptoList = [
   'XRP',
   'USDT',
   'XLM',
+  'TRX'
 
 ];
 
