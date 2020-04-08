@@ -14,45 +14,26 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
-  var priceBTC = "";
-  var priceETH = "";
-  var priceLTC = "";
+
+  bool isWaiting = false;
+  Map<String, String> coinValues = Map();
   double selectedCurrencyPrice = 0.0;
   String selectedCurrency = currenciesList.first;
 
-  Future<dynamic> getPriceData(String currency) async {
-    var url = "https://api.nomics.com/v1/currencies/ticker?key=5a7ec58775ac8842507c93b12d960906&ids=BTC,ETH,LTC&interval=1d&convert=$currency";
-    NetworkHelper networkHelper = NetworkHelper(url);
-    var priceData = await networkHelper.getData();
-    return priceData;
-  }
-
-  void printPriceInformation(String currency) async{
-    dynamic priceData = await getPriceData("$currency");
-    List<dynamic> body = jsonDecode(priceData.body);
-    setState(() {
-      priceBTC = body[0]["price"];
-      priceETH = body[1]["price"];
-      priceLTC = body[2]["price"];
-    });
-
-    //print(priceBTC);
-    //print(priceETH);
-    //print(priceLTC);
-  }
-
-   getCoinPriceData(String currencyToken) async {
-    var url = "https://api.nomics.com/v1/currencies/ticker?key=5a7ec58775ac8842507c93b12d960906&ids=$currencyToken&interval=1d&convert=$selectedCurrency";
-    NetworkHelper networkHelper = NetworkHelper(url);
-    var response = await networkHelper.getData();
-    if(response.statusCode == 200){
-      var body = jsonDecode(response.body);
-      var coinData = body[0]["price"].toString();
-      return coinData;
-    }else{
-      return "unable to get data";
+  void getData() async{
+    isWaiting = true;
+    try {
+      var data = await CoinData().getCoinPriceData(selectedCurrency);
+      setState(() {
+        coinValues = data;
+      });
+      print(coinValues);
+    } catch (e){
+      print(e);
     }
+    isWaiting = false;
   }
+
 
   DropdownMenuItem<String> createDropDownMenuItem(String s){
     return DropdownMenuItem(child: Text(s), value: s,);
@@ -80,65 +61,39 @@ class _PriceScreenState extends State<PriceScreen> {
         itemExtent: 32.0,
         onSelectedItemChanged: (selectedIndex) {
           selectedCurrency = currenciesList[selectedIndex];
+          getData();
+          setState(() {
+
+          });
           print(selectedCurrency);
         },
         children: createIosList()
     );
   }
 
-  String getCoinText(String crypto){
-    //get coin info
-    if(crypto == "BTC"){
-      return '1 $crypto = $priceBTC $selectedCurrency';
-    }else if (crypto == "ETH"){
-      return '1 $crypto = $priceETH $selectedCurrency';
-    }else if (crypto == "LTC"){
-      return '1 $crypto = $priceLTC $selectedCurrency';
-    }
-  }
-
-
   DropdownButton androidDropDown(){
     return DropdownButton(
         value: selectedCurrency,
         items: createDropDownMenItemList(),
         onChanged: (_value) {
-          print(selectedCurrency);
           setState(() {
             selectedCurrency = _value;
-            printPriceInformation(selectedCurrency);
+            print(selectedCurrency);
+            getData();
           });
         });
-  }
-
-  Padding createCryptoPad(String crypto){
-    return Padding(
-      padding: EdgeInsets.fromLTRB(10.0, 14.0, 10.0, 0),
-      child: Card(
-        color: Colors.lightBlueAccent,
-        elevation: 5.0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-          child: Text(
-            getCoinText(crypto),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 20.0,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   List<Widget> createCryptoPadList() {
     List<Widget> list = List();
     for(String crypto in cryptoList) {
-      list.add(createCryptoPad(crypto));
+      list.add(
+          CoinCard(
+            price: isWaiting ? "loading..." : coinValues[crypto],
+            cryptoCurrency: crypto ,
+            selectedCurrency: selectedCurrency,
+          )
+      );
     }
     return list;
   }
@@ -148,14 +103,7 @@ class _PriceScreenState extends State<PriceScreen> {
     // TODO: implement initState
     super.initState();
     print(selectedCurrency);
-    printPriceInformation(selectedCurrency);
-    printP();
-  }
-
-  void printP(){
-    print(priceBTC);
-    print(priceETH);
-    print(priceLTC);
+    getData();
   }
 
   @override
@@ -185,6 +133,36 @@ class _PriceScreenState extends State<PriceScreen> {
   }
 }
 
-/*
+class CoinCard extends StatelessWidget {
 
-*/
+  final String price;
+  final String selectedCurrency;
+  final String cryptoCurrency;
+
+  CoinCard({this.price, this.selectedCurrency, this.cryptoCurrency,});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(10.0, 14.0, 10.0, 0),
+      child: Card(
+        color: Colors.lightBlueAccent,
+        elevation: 5.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
+          child: Text(
+            "1 $cryptoCurrency = $price $selectedCurrency",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20.0,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
